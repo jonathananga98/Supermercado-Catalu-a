@@ -1,0 +1,194 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Supermercado Cataluña - Tienda Online</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        .product-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid rgba(0,0,0,0.05) !important;
+        }
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 .5rem 1.5rem rgba(0,0,0,0.08) !important;
+        }
+        .category-scroll::-webkit-scrollbar {
+            height: 6px;
+        }
+        .category-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <!-- Navbar Superior -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{% url 'lista_productos' %}">🛒 SUPERMERCADO CATALUÑA</a>
+            
+            <form class="d-flex mx-auto w-50" method="GET" action="{% url 'lista_productos' %}">
+                <input class="form-control me-2 rounded-pill shadow-sm" type="search" name="q" placeholder="¿Qué estás buscando hoy? (ej. arroz, leche...)" value="{{ request.GET.q }}">
+                <button class="btn btn-outline-light rounded-pill px-3 shadow-sm" type="submit"><i class="bi bi-search"></i></button>
+            </form>
+
+            <div class="navbar-nav ms-auto align-items-center">
+                <a href="{% url 'ver_carrito' %}" class="btn btn-warning btn-sm me-3 position-relative fw-semibold px-3 rounded-pill shadow-sm">
+                    <i class="bi bi-cart-fill"></i> Carrito
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        {{ cart_count|default:0 }}
+                    </span>
+                </a>
+
+                {% if user.is_authenticated %}
+                    <span class="text-white me-2 small">Hola, <strong>{{ user.username }}</strong></span>
+                    {% if user.is_staff %}
+                        <a class="btn btn-outline-warning btn-sm me-2" href="/admin/">Admin</a>
+                    {% endif %}
+                    <a class="btn btn-outline-light btn-sm" href="{% url 'logout' %}">Salir</a>
+                {% else %}
+                    <a class="btn btn-outline-light btn-sm me-2" href="{% url 'login' %}">Entrar</a>
+                    <a class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm" href="{% url 'registro' %}">Registrarse</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <div class="container my-5">
+        
+        <!-- Banner de Bienvenida -->
+        <div class="p-4 p-md-5 mb-5 bg-white rounded-4 shadow-sm text-center text-md-start">
+            <div class="row align-items-center">
+                <div class="col-md-3 text-center mb-3 mb-md-0">
+                    <img src="{% static 'logo.png' %}" alt="Logo Supermercado Cataluña" class="img-fluid" style="max-height: 125px; object-fit: contain; background: transparent;">
+                </div>
+                <div class="col-md-9">
+                    <h1 class="fw-bold text-dark display-6 mb-2" style="letter-spacing: -0.5px;">Supermercado Cataluña Online</h1>
+                    <p class="text-secondary fs-6 mb-0" style="font-weight: 400; line-height: 1.5;">Todo lo que necesitas para tu hogar, fresco y al mejor precio. <br><span class="text-success fw-bold">¡Merca más, gasta menos!</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros de Categorías Estéticos con Desplazamiento Completo -->
+        <!-- Filtros de Categorías Estéticos con Desplazamiento Completo -->
+        <!-- Filtros de Categorías -->
+        <div class="mb-5 overflow-auto pb-3 category-scroll">
+            <div class="d-flex gap-2 px-1">
+                <a href="{% url 'lista_productos' %}" class="btn {% if not categoria_activa %}btn-dark{% else %}btn-outline-dark{% endif %} rounded-pill px-4 fw-semibold shadow-sm text-nowrap">
+                    <i class="bi bi-grid-fill me-1"></i> Todos
+                </a>
+                
+                {% for cat in categorias %}
+                    {% if "SIN DEPARTAMENTO" not in cat.nombre|upper and "PAQUETES" not in cat.nombre|upper %}
+                        <a href="{% url 'lista_productos' %}?categoria={{ cat.id }}" class="btn {% if categoria_activa == cat.id %}btn-dark{% else %}btn-outline-dark{% endif %} rounded-pill px-4 fw-semibold shadow-sm text-nowrap">
+                            {% if "ABARROTES" in cat.nombre|upper %}<i class="bi bi-basket-fill me-1"></i>
+                            {% elif "ASEO PERSONAL" in cat.nombre|upper %}<i class="bi bi-person-heart me-1"></i>
+                            {% elif "ASEO" in cat.nombre|upper %}<i class="bi bi-droplet-half me-1"></i>
+                            {% elif "GASEOSAS" in cat.nombre|upper or "LICORES" in cat.nombre|upper or "CERVEZAS" in cat.nombre|upper %}<i class="bi bi-cup-straw me-1"></i>
+                            {% elif "FARMACIA" in cat.nombre|upper %}<i class="bi bi-capsule me-1"></i>
+                            {% elif "DULCES" in cat.nombre|upper %}<i class="bi bi-cookie me-1"></i>
+                            {% elif "PANADERIA" in cat.nombre|upper %}<i class="bi bi-egg-fried me-1"></i>
+                            {% elif "VERDURAS" in cat.nombre|upper or "ALIMENTOS" in cat.nombre|upper %}<i class="bi bi-apple me-1"></i>
+                            {% elif "SNACKS" in cat.nombre|upper %}<i class="bi bi-bag-fill me-1"></i>
+                            {% else %}<i class="bi bi-tag-fill me-1"></i>
+                            {% endif %}
+                            {{ cat.nombre }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Cuadrícula de Productos -->
+        <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
+            {% for producto in page_obj %}
+                <div class="col">
+                    <div class="card product-card h-100 rounded-4 bg-white p-3 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-uppercase text-muted fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.5px;">
+                                    {{ producto.categoria.nombre|default:"General" }}
+                                </span>
+                            </div>
+                            <h6 class="fw-bold text-dark mb-2" style="font-size: 0.95rem; line-height: 1.4;">{{ producto.nombre }}</h6>
+                        </div>
+                        
+                        <div>
+                            <div class="d-flex align-items-baseline justify-content-between mb-3">
+                                <span class="text-success fw-bold fs-5">${{ producto.precio_venta }}</span>
+                                <span class="text-muted small">Stock: {{ producto.stock }}</span>
+                            </div>
+                            
+                            <a href="{% url 'agregar_carrito' producto.id %}" class="btn btn-dark w-100 rounded-pill fw-semibold py-2 shadow-sm" style="font-size: 0.85rem;">
+                                <i class="bi bi-cart-plus me-1"></i> Agregar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12 text-center py-5 bg-white rounded-4 shadow-sm">
+                    <i class="bi bi-search display-1 text-muted mb-3"></i>
+                    <h4 class="text-muted">No se encontraron productos</h4>
+                    <p class="text-muted small">Prueba buscando con otro término o selecciona otra categoría.</p>
+                    <a href="{% url 'lista_productos' %}" class="btn btn-dark rounded-pill px-4 mt-2">Ver todos los productos</a>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Paginación (50 productos por página) -->
+        {% if page_obj.has_other_pages %}
+            <nav class="mt-5">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link rounded-start-pill text-dark fw-semibold" href="?page={{ page_obj.previous_page_number }}{% if request.GET.categoria %}&categoria={{ request.GET.categoria }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Anterior</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link rounded-start-pill">Anterior</span></li>
+                    {% endif %}
+
+                    <li class="page-item disabled">
+                        <span class="page-link bg-light text-dark fw-bold">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link rounded-end-pill text-dark fw-semibold" href="?page={{ page_obj.next_page_number }}{% if request.GET.categoria %}&categoria={{ request.GET.categoria }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Siguiente</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link rounded-end-pill">Siguiente</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-4 mt-5">
+        <p class="mb-0 small">Supermercado Cataluña &copy; 2026 - Todos los derechos reservados</p>
+    </footer>
+<script>
+    window.addEventListener('beforeunload', function() {
+        sessionStorage.setItem('posicionScroll', window.scrollY);
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        let posicionGuardada = sessionStorage.getItem('posicionScroll');
+        if (posicionGuardada) {
+            window.scrollTo({
+                top: parseInt(posicionGuardada),
+                left: 0,
+                behavior: "instant"
+            });
+            sessionStorage.removeItem('posicionScroll');
+        }
+    });
+</script>
+</body>
+</html>
