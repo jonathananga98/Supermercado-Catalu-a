@@ -3,43 +3,36 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supermercado Cataluña - Tienda Online</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <style>
-        .product-card {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            border: 1px solid rgba(0,0,0,0.05) !important;
-        }
-        .product-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 .5rem 1.5rem rgba(0,0,0,0.08) !important;
-        }
-        .category-scroll::-webkit-scrollbar {
-            height: 6px;
-        }
-        .category-scroll::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/tienda.css' %}">
 </head>
-<body class="bg-light">
+<body>
 
     <!-- Navbar Superior -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="{% url 'lista_productos' %}">🛒 SUPERMERCADO CATALUÑA</a>
             
-            <form class="d-flex mx-auto w-50" method="GET" action="{% url 'lista_productos' %}">
-                <input class="form-control me-2 rounded-pill shadow-sm" type="search" name="q" placeholder="¿Qué estás buscando hoy? (ej. arroz, leche...)" value="{{ request.GET.q }}">
+         <form class="d-flex mx-auto col-12 col-lg-5 my-2 my-lg-0" method="GET" action="{% url 'lista_productos' %}">
+                <div class="position-relative flex-grow-1 me-2">
+                    <input id="input-busqueda-api" class="form-control rounded-pill shadow-sm" type="search" name="q"
+                           value="{{ request.GET.q|default:'' }}"
+                           placeholder="¿Qué estás buscando hoy? (ej. arroz, leche...)" autocomplete="off">
+                    <div id="resultados-busqueda-api"
+                         class="list-group position-absolute w-100 mt-1 shadow-lg rounded-4 overflow-hidden d-none"
+                         style="z-index: 1090; max-height: 360px; overflow-y: auto;">
+                    </div>
+                </div>
                 <button class="btn btn-outline-light rounded-pill px-3 shadow-sm" type="submit"><i class="bi bi-search"></i></button>
             </form>
 
             <div class="navbar-nav ms-auto align-items-center">
                 <a href="{% url 'ver_carrito' %}" class="btn btn-warning btn-sm me-3 position-relative fw-semibold px-3 rounded-pill shadow-sm">
                     <i class="bi bi-cart-fill"></i> Carrito
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    <span id="contador-carrito" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                         {{ cart_count|default:0 }}
                     </span>
                 </a>
@@ -58,113 +51,190 @@
         </div>
     </nav>
 
+    {% if messages %}
+    <div class="container mt-3">
+        {% for message in messages %}
+        <div class="alert alert-warning alert-dismissible fade show rounded-4 shadow-sm border-0" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <!-- Contenido Principal -->
     <div class="container my-5">
-        
-        <!-- Banner de Bienvenida -->
-        <div class="p-4 p-md-5 mb-5 bg-white rounded-4 shadow-sm text-center text-md-start">
-            <div class="row align-items-center">
-                <div class="col-md-3 text-center mb-3 mb-md-0">
-                    <img src="{% static 'logo.png' %}" alt="Logo Supermercado Cataluña" class="img-fluid" style="max-height: 125px; object-fit: contain; background: transparent;">
+
+        <!-- === SLIDER PROMOCIONAL PRINCIPAL === -->
+        <div id="bannerPrincipal" class="carousel slide mb-4 shadow-sm rounded-4 overflow-hidden" data-bs-ride="carousel">
+            
+            <!-- Indicadores inferiores -->
+            <div class="carousel-indicators">
+                <button type="button" data-bs-target="#bannerPrincipal" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+                <button type="button" data-bs-target="#bannerPrincipal" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                <button type="button" data-bs-target="#bannerPrincipal" data-bs-slide-to="2" aria-label="Slide 3"></button>
+            </div>
+
+            <!-- Imágenes del Slider -->
+            <div class="carousel-inner">
+                <!-- Slide 1: Cervezas -->
+                <div class="carousel-item active" data-bs-interval="5000">
+                    <a href="{% url 'lista_productos' %}?categoria=14">
+                        <img src="{% static 'banner_cerveza.jfif' %}?v=2" class="d-block w-100" alt="Tu cerveza favorita al mejor precio">
+                    </a>
                 </div>
-                <div class="col-md-9">
-                    <h1 class="fw-bold text-dark display-6 mb-2" style="letter-spacing: -0.5px;">Supermercado Cataluña Online</h1>
-                    <p class="text-secondary fs-6 mb-0" style="font-weight: 400; line-height: 1.5;">Todo lo que necesitas para tu hogar, fresco y al mejor precio. <br><span class="text-success fw-bold">¡Merca más, gasta menos!</span></p>
+
+                <!-- Slide 2: Aseo -->
+                <div class="carousel-item" data-bs-interval="5000">
+                    <a href="{% url 'lista_productos' %}?categoria=7">
+                        <img src="{% static 'banner_aseog.jfif' %}?v=2" class="d-block w-100" alt="Tu aseo completo y fresco al mejor precio">
+                    </a>
+                </div>
+
+                <!-- Slide 3: Snacks -->
+                <div class="carousel-item" data-bs-interval="5000">
+                    <a href="{% url 'lista_productos' %}?categoria=10">
+                        <img src="{% static 'banner_snacks.jfif' %}?v=2" class="d-block w-100" alt="Tus snacks favoritos al mejor precio">
+                    </a>
                 </div>
             </div>
-        </div>
 
-        <!-- Filtros de Categorías Estéticos con Desplazamiento Completo -->
-        <!-- Filtros de Categorías Estéticos con Desplazamiento Completo -->
+            <!-- Flechas laterales -->
+            <button class="carousel-control-prev" type="button" data-bs-target="#bannerPrincipal" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon bg-dark bg-opacity-50 rounded-circle p-3" aria-hidden="true"></span>
+                <span class="visually-hidden">Anterior</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#bannerPrincipal" data-bs-slide="next">
+                <span class="carousel-control-next-icon bg-dark bg-opacity-50 rounded-circle p-3" aria-hidden="true"></span>
+                <span class="visually-hidden">Siguiente</span>
+            </button>
+        </div>
+        <!-- === FIN DEL SLIDER === -->
+
         <!-- Filtros de Categorías -->
-        <div class="mb-5 overflow-auto pb-3 category-scroll">
-            <div class="d-flex gap-2 px-1">
-                <a href="{% url 'lista_productos' %}" class="btn {% if not categoria_activa %}btn-dark{% else %}btn-outline-dark{% endif %} rounded-pill px-4 fw-semibold shadow-sm text-nowrap">
-                    <i class="bi bi-grid-fill me-1"></i> Todos
-                </a>
-                
-                {% for cat in categorias %}
-                    {% if "SIN DEPARTAMENTO" not in cat.nombre|upper and "PAQUETES" not in cat.nombre|upper %}
-                        <a href="{% url 'lista_productos' %}?categoria={{ cat.id }}" class="btn {% if categoria_activa == cat.id %}btn-dark{% else %}btn-outline-dark{% endif %} rounded-pill px-4 fw-semibold shadow-sm text-nowrap">
-                            {% if "ABARROTES" in cat.nombre|upper %}<i class="bi bi-basket-fill me-1"></i>
-                            {% elif "ASEO PERSONAL" in cat.nombre|upper %}<i class="bi bi-person-heart me-1"></i>
-                            {% elif "ASEO" in cat.nombre|upper %}<i class="bi bi-droplet-half me-1"></i>
-                            {% elif "GASEOSAS" in cat.nombre|upper or "LICORES" in cat.nombre|upper or "CERVEZAS" in cat.nombre|upper %}<i class="bi bi-cup-straw me-1"></i>
-                            {% elif "FARMACIA" in cat.nombre|upper %}<i class="bi bi-capsule me-1"></i>
-                            {% elif "DULCES" in cat.nombre|upper %}<i class="bi bi-cookie me-1"></i>
-                            {% elif "PANADERIA" in cat.nombre|upper %}<i class="bi bi-egg-fried me-1"></i>
-                            {% elif "VERDURAS" in cat.nombre|upper or "ALIMENTOS" in cat.nombre|upper %}<i class="bi bi-apple me-1"></i>
-                            {% elif "SNACKS" in cat.nombre|upper %}<i class="bi bi-bag-fill me-1"></i>
-                            {% else %}<i class="bi bi-tag-fill me-1"></i>
-                            {% endif %}
-                            {{ cat.nombre }}
-                        </a>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        </div>
+        <div class="categorias-scroll mb-4">
+            <a href="{% url 'lista_productos' %}" class="btn-categoria {% if not categoria_activa %}activa{% endif %}">
+                <i class="bi bi-grid-fill"></i> Todos
+            </a>
 
-        <!-- Cuadrícula de Productos -->
-        <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
-            {% for producto in page_obj %}
-                <div class="col">
-                    <div class="card product-card h-100 rounded-4 bg-white p-3 d-flex flex-column justify-content-between">
-                        <div>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-uppercase text-muted fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.5px;">
-                                    {{ producto.categoria.nombre|default:"General" }}
-                                </span>
-                            </div>
-                            <h6 class="fw-bold text-dark mb-2" style="font-size: 0.95rem; line-height: 1.4;">{{ producto.nombre }}</h6>
-                        </div>
-                        
-                        <div>
-                            <div class="d-flex align-items-baseline justify-content-between mb-3">
-                                <span class="text-success fw-bold fs-5">${{ producto.precio_venta }}</span>
-                                <span class="text-muted small">Stock: {{ producto.stock }}</span>
-                            </div>
-                            
-                            <a href="{% url 'agregar_carrito' producto.id %}" class="btn btn-dark w-100 rounded-pill fw-semibold py-2 shadow-sm" style="font-size: 0.85rem;">
-                                <i class="bi bi-cart-plus me-1"></i> Agregar
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            {% empty %}
-                <div class="col-12 text-center py-5 bg-white rounded-4 shadow-sm">
-                    <i class="bi bi-search display-1 text-muted mb-3"></i>
-                    <h4 class="text-muted">No se encontraron productos</h4>
-                    <p class="text-muted small">Prueba buscando con otro término o selecciona otra categoría.</p>
-                    <a href="{% url 'lista_productos' %}" class="btn btn-dark rounded-pill px-4 mt-2">Ver todos los productos</a>
-                </div>
+            {% for cat in categorias %}
+                {% if "SIN DEPARTAMENTO" not in cat.nombre|upper and "PAQUETES" not in cat.nombre|upper %}
+                    <a href="{% url 'lista_productos' %}?categoria={{ cat.id }}" class="btn-categoria {% if categoria_activa == cat.id %}activa{% endif %}">
+                        {% if "ABARROTES" in cat.nombre|upper %}<i class="bi bi-basket-fill"></i>
+                        {% elif "ASEO PERSONAL" in cat.nombre|upper %}<i class="bi bi-person-heart"></i>
+                        {% elif "ASEO" in cat.nombre|upper %}<i class="bi bi-droplet-half"></i>
+                        {% elif "GASEOSAS" in cat.nombre|upper or "LICORES" in cat.nombre|upper or "CERVEZAS" in cat.nombre|upper %}<i class="bi bi-cup-straw"></i>
+                        {% elif "FARMACIA" in cat.nombre|upper %}<i class="bi bi-capsule"></i>
+                        {% elif "DULCES" in cat.nombre|upper %}<i class="bi bi-cookie"></i>
+                        {% elif "PANADERIA" in cat.nombre|upper %}<i class="bi bi-egg-fried"></i>
+                        {% elif "VERDURAS" in cat.nombre|upper or "ALIMENTOS" in cat.nombre|upper %}<i class="bi bi-apple"></i>
+                        {% elif "SNACKS" in cat.nombre|upper %}<i class="bi bi-bag-fill"></i>
+                        {% else %}<i class="bi bi-tag-fill"></i>
+                        {% endif %}
+                        {{ cat.nombre }}
+                    </a>
+                {% endif %}
             {% endfor %}
         </div>
 
-        <!-- Paginación (50 productos por página) -->
+        <!-- Cuadrícula de Productos -->
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            {% for producto in page_obj %}
+            <div class="col">
+                <div class="card-producto">
+                    <div>
+                        <!-- Caja de Imagen Nivelada -->
+                        <div class="producto-img-box">
+                            {% if producto.imagen %}
+                                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+                            {% else %}
+                                <img src="{% static 'logo.png' %}" alt="Sin imagen">
+                            {% endif %}
+                        </div>
+
+                        <!-- Categoría y Nombre -->
+                        <div class="producto-cat-tag">{{ producto.categoria.nombre|default:"General" }}</div>
+                        <h6 class="producto-titulo">{{ producto.nombre }}</h6>
+                    </div>
+
+                    <div>
+                        <!-- Precio y Stock -->
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="producto-precio">${{ producto.precio_venta }}</span>
+                            <span class="badge-stock {% if producto.stock <= 3 %}bajo{% endif %}">
+                                {% if producto.stock <= 3 %}¡Quedan {{ producto.stock }}!{% else %}Stock: {{ producto.stock }}{% endif %}
+                            </span>
+                        </div>
+
+                        <!-- Botón Agregar -->
+                        {% if producto.stock > 0 %}
+    <a href="{% url 'agregar_carrito' producto.id %}" class="btn-agregar-carrito">
+        <i class="bi bi-cart-plus"></i> Agregar
+    </a>
+{% else %}
+    <button type="button" class="btn-agregar-carrito" disabled style="background: #9ca3af; cursor: not-allowed; box-shadow: none;">
+        <i class="bi bi-x-circle"></i> Agotado
+    </button>
+{% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5 bg-white rounded-4 shadow-sm">
+                <i class="bi bi-search display-1 text-muted mb-3"></i>
+                <h4 class="text-muted">No se encontraron productos</h4>
+                <p class="text-muted small">Prueba buscando con otro término o selecciona otra categoría.</p>
+                <a href="{% url 'lista_productos' %}" class="btn btn-dark rounded-pill px-4 mt-2">Ver todos los productos</a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Paginación Numerada Avanzada (50 productos por página) -->
         {% if page_obj.has_other_pages %}
-            <nav class="mt-5">
-                <ul class="pagination justify-content-center">
-                    {% if page_obj.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link rounded-start-pill text-dark fw-semibold" href="?page={{ page_obj.previous_page_number }}{% if request.GET.categoria %}&categoria={{ request.GET.categoria }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Anterior</a>
-                        </li>
-                    {% else %}
-                        <li class="page-item disabled"><span class="page-link rounded-start-pill">Anterior</span></li>
-                    {% endif %}
-
-                    <li class="page-item disabled">
-                        <span class="page-link bg-light text-dark fw-bold">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        <nav class="mt-5">
+            <ul class="pagination justify-content-center flex-wrap gap-1">
+                
+                <!-- Botón Anterior -->
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link rounded-pill text-dark fw-semibold px-3 shadow-sm" href="?page={{ page_obj.previous_page_number }}{% if request.GET.categoria %}&categoria={{ request.GET.categoria }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                            <i class="bi bi-chevron-left"></i> Anterior
+                        </a>
                     </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link rounded-pill px-3">Anterior</span></li>
+                {% endif %}
 
-                    {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link rounded-end-pill text-dark fw-semibold" href="?page={{ page_obj.next_page_number }}{% if request.GET.categoria %}&categoria={{ request.GET.categoria }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Siguiente</a>
+                <!-- Números de Página con Elipses (...) -->
+                {% for num in custom_page_range %}
+                    {% if num == page_obj.number %}
+                        <li class="page-item active">
+                            <span class="page-link rounded-circle bg-dark border-dark text-white fw-bold px-3 py-2 shadow-sm">{{ num }}</span>
                         </li>
+                    {% elif num == page_obj.paginator.ELLIPSIS %}
+                        <li class="page-item disabled"><span class="page-link border-0 bg-transparent text-muted px-2">...</span></li>
                     {% else %}
-                        <li class="page-item disabled"><span class="page-link rounded-end-pill">Siguiente</span></li>
+                        <li class="page-item">
+                            <a class="page-link rounded-circle text-dark fw-semibold px-3 py-2 shadow-sm" href="?page={{ num }}{% if request.GET.categoria %}&categoria={{ request.GET.categoria }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                                {{ num }}
+                            </a>
+                        </li>
                     {% endif %}
-                </ul>
-            </nav>
+                {% endfor %}
+
+                <!-- Botón Siguiente -->
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link rounded-pill text-dark fw-semibold px-3 shadow-sm" href="?page={{ page_obj.next_page_number }}{% if request.GET.categoria %}&categoria={{ request.GET.categoria }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                            Siguiente <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link rounded-pill px-3">Siguiente</span></li>
+                {% endif %}
+
+            </ul>
+        </nav>
         {% endif %}
 
     </div>
@@ -173,22 +243,23 @@
     <footer class="bg-dark text-white text-center py-4 mt-5">
         <p class="mb-0 small">Supermercado Cataluña &copy; 2026 - Todos los derechos reservados</p>
     </footer>
-<script>
-    window.addEventListener('beforeunload', function() {
-        sessionStorage.setItem('posicionScroll', window.scrollY);
-    });
 
-    document.addEventListener("DOMContentLoaded", function() {
-        let posicionGuardada = sessionStorage.getItem('posicionScroll');
-        if (posicionGuardada) {
-            window.scrollTo({
-                top: parseInt(posicionGuardada),
-                left: 0,
-                behavior: "instant"
-            });
-            sessionStorage.removeItem('posicionScroll');
-        }
-    });
-</script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+   
+    <!-- Notificación Flotante (Toast) para respuesta de la API DRF -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+        <div id="toastCarrito" class="toast align-items-center text-white bg-success border-0 rounded-4 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body fw-semibold" id="toastCarritoTexto">
+                    Producto agregado al carrito
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/tienda_api.js' %}"></script>
+</body>
+</html>
 </body>
 </html>
