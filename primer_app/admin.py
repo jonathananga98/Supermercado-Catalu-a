@@ -3,7 +3,7 @@ from django.contrib.admin.helpers import ActionForm
 from django import forms
 from django.utils.html import format_html
 from .models import Categoria, Producto
-from .models import Categoria, Producto, ZonaDomicilio, Pedido, DetallePedido
+from .models import Categoria, Producto, ZonaDomicilio, Pedido, DetallePedido, PerfilCliente
 
 # 1. Creamos un formulario en la acción para elegir a qué categoría cambiar
 class AsignarCategoriaForm(ActionForm):
@@ -67,11 +67,36 @@ class ZonaDomicilioAdmin(admin.ModelAdmin):
 class DetallePedidoInline(admin.TabularInline):
     model = DetallePedido
     extra = 0
+    can_delete = False
     readonly_fields = ('producto', 'nombre_producto', 'cantidad', 'precio_unitario', 'subtotal')
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(Pedido)
 class PedidoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'nombre_cliente', 'telefono', 'tipo_entrega', 'zona', 'subtotal', 'costo_envio', 'total', 'estado', 'fecha_creacion')
+    list_display = ('numero', 'nombre_cliente', 'telefono', 'cliente_registrado', 'tipo_entrega', 'zona',
+                    'subtotal', 'costo_envio', 'total', 'estado', 'fecha_creacion')
+    list_display_links = ('numero', 'nombre_cliente')
     list_filter = ('estado', 'tipo_entrega', 'zona', 'fecha_creacion')
     list_editable = ('estado',)
+    search_fields = ('nombre_cliente', 'telefono', 'usuario__username')
+    date_hierarchy = 'fecha_creacion'
+    ordering = ('-id',)
+    readonly_fields = ('numero', 'usuario', 'fecha_creacion')
     inlines = [DetallePedidoInline]
+
+    @admin.display(description='N.º pedido', ordering='id')
+    def numero(self, obj):
+        return obj.codigo
+
+    @admin.display(description='Cuenta', boolean=True)
+    def cliente_registrado(self, obj):
+        return obj.usuario_id is not None
+
+
+@admin.register(PerfilCliente)
+class PerfilClienteAdmin(admin.ModelAdmin):
+    list_display = ('user', 'telefono', 'direccion')
+    search_fields = ('user__username', 'user__first_name', 'user__email', 'telefono')

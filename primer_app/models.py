@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.db.models.signals import pre_save, pre_delete
 from django.dispatch import receiver
@@ -42,6 +43,20 @@ class ZonaDomicilio(models.Model):
         return f"{self.nombre} (${self.tarifa_base:,.0f})"
 
 
+class PerfilCliente(models.Model):
+    """Datos extra del cliente registrado (teléfono y última dirección) para próximas compras."""
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='perfil', on_delete=models.CASCADE)
+    telefono = models.CharField(max_length=30, blank=True, default='')
+    direccion = models.CharField(max_length=255, blank=True, default='')
+
+    class Meta:
+        verbose_name = 'Perfil de cliente'
+        verbose_name_plural = 'Perfiles de clientes'
+
+    def __str__(self):
+        return f"{self.user.first_name or self.user.username} ({self.telefono or 'sin teléfono'})"
+
+
 class Pedido(models.Model):
     ESTADOS = [
         ('PENDIENTE', 'Pendiente'),
@@ -49,6 +64,11 @@ class Pedido(models.Model):
         ('CANCELADO', 'Cancelado'),
     ]
 
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name='pedidos',
+        on_delete=models.SET_NULL, null=True, blank=True,
+        help_text='Vacío cuando el cliente compró como invitado.',
+    )
     nombre_cliente = models.CharField(max_length=150)
     telefono = models.CharField(max_length=30)
     tipo_entrega = models.CharField(max_length=20, default='domicilio')  # 'domicilio' o 'recoger'
@@ -62,8 +82,13 @@ class Pedido(models.Model):
     estado = models.CharField(max_length=20, choices=ESTADOS, default='PENDIENTE')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def codigo(self):
+        """Número de pedido legible, el mismo que ve el cliente en WhatsApp. Ej: CAT-00012"""
+        return f"CAT-{self.pk:05d}" if self.pk else ''
+
     def __str__(self):
-        return f"Pedido #{self.id} - {self.nombre_cliente} (${self.total:,.0f})"
+        return f"Pedido {self.codigo} - {self.nombre_cliente} (${self.total:,.0f})"
 
     def save(self, *args, **kwargs):
         self.total = (self.subtotal or 0) + (self.costo_envio or 0)

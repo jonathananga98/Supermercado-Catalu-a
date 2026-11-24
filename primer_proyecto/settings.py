@@ -39,13 +39,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
-    'primer_app'
+    'rest_framework.authtoken',
+    'primer_app',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # debe ir lo más arriba posible
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -106,9 +107,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-co'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Bogota'
 
 USE_I18N = True
 
@@ -132,14 +133,36 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Configuración CORS para conectar con Angular (localhost:4200)
+# ---------------------------------------------------------------------------
+# CORS / CSRF para Angular (ng serve en el puerto 4200)
+# ---------------------------------------------------------------------------
+from corsheaders.defaults import default_headers, default_methods
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",
     "http://127.0.0.1:4200",
 ]
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = list(default_methods)                    # GET, POST, PUT, PATCH, DELETE, OPTIONS...
+CORS_ALLOW_HEADERS = list(default_headers)                    # ya incluye "authorization" (Token ...)
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:4200",
     "http://127.0.0.1:4200",
 ]
+
+# ---------------------------------------------------------------------------
+# Django REST Framework: autenticación por token para los clientes de la tienda
+# ---------------------------------------------------------------------------
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "auth": "30/hour",     # login + registro por IP
+        "pedidos": "60/hour",  # pedidos por IP
+    },
+}
+
+# Número de WhatsApp de la tienda (formato internacional, sin "+")
+WHATSAPP_NUMERO = "573202656464"

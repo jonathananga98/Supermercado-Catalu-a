@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
-from . import views
+from . import views, api_views
 from django.conf.urls.static import static
 
 urlpatterns = [
@@ -18,7 +18,13 @@ urlpatterns = [
     path('api/carrito/agregar/<int:producto_id>/', views.api_agregar_carrito, name='api_agregar_carrito'),
     path('api/carrito/actualizar/<int:producto_id>/', views.api_actualizar_carrito, name='api_actualizar_carrito'), 
     path('api/zonas/', views.api_zonas_domicilio, name='api_zonas_domicilio'),
-    path('api/checkout/', views.api_checkout, name='api_checkout'),
+    # Pedidos (invitado o autenticado) y cuentas de clientes
+    path('api/pedidos/', api_views.crear_pedido, name='api_crear_pedido'),
+    path('api/checkout/', api_views.crear_pedido, name='api_checkout'),  # alias retrocompatible
+    path('api/auth/registro/', api_views.registro_cliente, name='api_registro'),
+    path('api/auth/login/', api_views.login_cliente, name='api_login'),
+    path('api/auth/perfil/', api_views.perfil_cliente, name='api_perfil'),
+    path('api/auth/logout/', api_views.logout_cliente, name='api_logout'),
 
 ]
 
